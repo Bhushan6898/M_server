@@ -291,7 +291,7 @@ export const contactus = async (req, res) => {
    
     await sender.sendMail({
       from: email, 
-      to: "mahalaxmihardware.electric.2016@gmail.com",
+      to: "bp147180@gmail.com",
       subject: "New Contact Us Submission", 
       html: `
         <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px; background-color: #f9f9f9;">
