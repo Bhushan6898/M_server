@@ -17,8 +17,8 @@ import nodemailer from "nodemailer"
     port: 587,
     secure: false, // true for port 465, false for other ports
     auth: {
-      user: "mahalaxmihardware.electric.2016@gmail.com",
-      pass: " salv jwsi ontr cmrs",
+      user: "patil.bhushan6898@gmail.com",
+      pass: " lqsm soqp dfks pgfn",
     },
   });
   
