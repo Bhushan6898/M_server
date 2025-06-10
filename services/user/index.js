@@ -290,14 +290,15 @@ export const contactus = async (req, res) => {
   try {
    
     await sender.sendMail({
-      from: email, 
-      to: "bp147180@gmail.com",
+     from: `"Mahaluxmi Hardware" <${email}>`,
+      to: "patil.bhushan6898@gmail.com",
       subject: "New Contact Us Submission", 
       html: `
         <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px; background-color: #f9f9f9;">
-          <h2 style="text-align: center; color: #007bff;">New Contact Us Submission</h2>
+      <h2 style="text-align: center; color: #007bff;">Mahaluxmi Hardware - New Customer Inquiry</h2>
+
           <p><strong>Dear Admin,</strong></p>
-          <p>You have received a new message from your website's <strong>Contact Us</strong> form. Below are the details:</p>
+          <p>You have received a new message from <strong>Mahalaxmi Hardware</strong> Contact Usform. Below are the details:</p>
           <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
             <tr>
               <td style="padding: 10px; border: 1px solid #ddd; background-color: #f7f7f7;"><strong>Name:</strong></td>
@@ -313,9 +314,9 @@ export const contactus = async (req, res) => {
             </tr>
           </table>
           <p style="margin-top: 20px;">Please respond to the message as soon as possible.</p>
-          <p>Best regards,<br>Your Website Team</p>
+          <p>Best regards,<br>${name}</p>
           <footer style="text-align: center; margin-top: 20px; color: #555;">
-            <small>&copy; ${new Date().getFullYear()} Your Company. All rights reserved.</small>
+            <small>&copy; ${new Date().getFullYear()} Mahalaxmi Hardware. All rights reserved.</small>
           </footer>
         </div>
       `,
@@ -334,4 +335,3 @@ export const contactus = async (req, res) => {
     });
   }
 };
-
