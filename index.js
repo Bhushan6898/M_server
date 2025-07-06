@@ -10,7 +10,7 @@ import userroutes from './routes/user/index.js';
 import productroutes from './routes/product/index.js';
 import routes from './routes/auth/index.js';
 import billroutes from './routes/bill/index.js';
-
+import fileUpload from 'express-fileupload';
 
 dotenv.config();
 const app = express();
@@ -31,7 +31,10 @@ app.use(cors({
 //hello
 app.use(bodyParser.json());
 app.use(cookieParser());
-
+app.use(fileUpload({
+  useTempFiles:true,
+  tempFileDir: "/tmp/" 
+}))
 // Serve static files from the "uploads" directory
 
 app.use("/mahaluxmi_hardware", express.static(path.join(__dirname, "mahaluxmi_hardware")));

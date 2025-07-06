@@ -1,10 +1,13 @@
 
 import { clientModel, notificationModel, otpmodel } from '../../schemas/index.js';
 import dotenv from 'dotenv';
+import fs from "fs";
+import crypto from 'crypto'
 import {  uploadprofile } from '../../middleware/multer/index.js';
 import { createToken } from '../../middleware/jwt/index.js';
 import logAction from '../../middleware/activity/index.js';
 import { sender } from '../../middleware/email/email.sender.js';
+import { uploadToCloudinary } from '../../middleware/cloudenary/index.js';
 dotenv.config();
 export const registetration = async (req, res) => {
 
@@ -182,49 +185,69 @@ export const Profile = async (req, res) => {
   }
 };
 export const updateProfile = async (req, res) => {
-    uploadprofile(req, res, async function (err) {
-      if (err) {
-        return res.status(400).json({ message: "Image upload failed. " + err.message });
-      }
-  
-      const { id } = req.user;
-      const { firstName, lastName, email, mobileNumber, city, state, country } = req.body;
-  
-      try {
-        const user = await clientModel.findById(id);
-        if (!user) {
-          return res.status(404).json({ message: "User not found" });
-        }
-  
-        user.firstName = firstName || user.firstName;
-        user.lastName = lastName || user.lastName;
-        user.email = email || user.email;
-        user.mobileNumber = mobileNumber || user.mobileNumber;
-        user.city = city || user.city;
-        user.state = state || user.state;
-        user.country = country || user.country;
-  
-        if (req.file) {
-          user.profileImage = req.file.path;
-        } else if (!req.file && req.body.profileImageUpdate) {
-          return res.status(400).json({ message: "No image file provided for upload." });
-        }
-  
-        await user.save();
-        logAction(
-          user._id, 
-          'UPDATE_PROFILE', 
-        `Profile Update: ${user.firstName} ${user.lastName} (Email: ${user.email}) has updated their profile successfully.`,
+  const { id } = req.user;
 
-          req
-        );
-        return res.status(200).json({ message: "Profile updated successfully", user });
-      } catch (err) {
-        console.error(err);
-        return res.status(500).json({ message: "Server error" });
+ 
+  const {
+    firstName,
+    lastName,
+    email,
+    mobileNumber,
+    city,
+    state,
+    country,
+    profileImageUpdate,
+  } = req.body;
+
+  try {
+    const user = await clientModel.findById(id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    let cloudinaryResult = null;
+    if (req.files && req.files.image) {
+      const imageFile = req.files.image;
+      const filePath = imageFile.tempFilePath;
+
+      const fileBuffer = fs.readFileSync(filePath);
+      const fileHash = crypto.createHash("sha256").update(fileBuffer).digest("hex");
+      cloudinaryResult = await uploadToCloudinary(filePath, `user_${fileHash}`, "user-images");
+console.log(cloudinaryResult);
+
+      if (cloudinaryResult.duplicate) {
+        console.log("Image already exists in Cloudinary.");
       }
-    });
-  };
+    } else if (profileImageUpdate) {
+      return res.status(400).json({ message: "No image file provided for upload." });
+    }
+
+    user.firstName = firstName || user.firstName;
+    user.lastName = lastName || user.lastName;
+    user.email = email || user.email;
+    user.mobileNumber = mobileNumber || user.mobileNumber;
+    user.city = city || user.city;
+    user.state = state || user.state;
+    user.country = country || user.country;
+
+    if (cloudinaryResult && cloudinaryResult.secure_url) {
+      user.profileImage = cloudinaryResult.secure_url;
+    }
+
+    await user.save();
+
+    // 📘 Log the update
+    logAction(
+      user._id,
+      "UPDATE_PROFILE",
+      `Profile Update: ${user.firstName} ${user.lastName} (Email: ${user.email}) has updated their profile.`,
+      req
+    );
+
+    return res.status(200).json({ message: "Profile updated successfully", user });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
 
 export const updatepassword = async (req, res) => {
   try {
