@@ -211,7 +211,6 @@ export const updateProfile = async (req, res) => {
       const fileBuffer = fs.readFileSync(filePath);
       const fileHash = crypto.createHash("sha256").update(fileBuffer).digest("hex");
       cloudinaryResult = await uploadToCloudinary(filePath, `user_${fileHash}`, "user-images");
-console.log(cloudinaryResult);
 
       if (cloudinaryResult.duplicate) {
         console.log("Image already exists in Cloudinary.");

@@ -2,50 +2,73 @@
 import logAction from '../../middleware/activity/index.js';
 import { uploadImage } from '../../middleware/multer/index.js';
 import  { clientModel, notificationModel, productModel } from '../../schemas/index.js';
+import fs from "fs";
+import crypto from 'crypto'
+import { uploadToCloudinary } from '../../middleware/cloudenary/index.js';
+
 
 export const addProduct = async (req, res) => {
   const { id } = req.user;
- 
-    
-  
-  uploadImage(req, res, async function (err) {
-    if (err) {
-      return res.status(400).json({ message: err.message });
+  const { name, price, stock, category, brand, sku } = req.body;
+
+  try {
+    // Check if product with the same SKU already exists
+    const existingProduct = await productModel.findOne({ sku });
+    if (existingProduct) {
+      return res.status(401).json({ message: "Product with this SKU already exists" });
     }
 
-    const { name, description, price, stock, category, brand, sku } = req.body;
+    const user = await clientModel.findById(id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
-    try {
-      // Check for existing product by SKU
-      const existingProduct = await productModel.findOne({ sku });
-      const user = await clientModel.findById(id);
-      if (existingProduct) {
-        return res.status(401).json({ message: "Product with this SKU already exists" });
+    // Upload product image if available
+    let cloudinaryResult = null;
+    if (req.files && req.files.productImage) {
+      const imageFile = req.files.productImage;
+      const filePath = imageFile.tempFilePath;
+
+      try {
+        const fileBuffer = fs.readFileSync(filePath);
+        const fileHash = crypto.createHash("sha256").update(fileBuffer).digest("hex");
+
+        cloudinaryResult = await uploadToCloudinary(filePath, `product_${fileHash}`, "product-images");
+console.log(cloudinaryResult);
+
+        if (cloudinaryResult.existing) {
+          return res.status(400).json({message:"Product image already exists in Cloudinary."});
+        }
+      } catch (imageError) {
+        console.error("Error uploading product image:", imageError);
+        return res.status(500).json({ message: "Failed to upload product image" });
       }
+    }
 
-      const imageUrl = req.file ? `/mahaluxmi_hardware/${req.file.filename}` : null;
+    // Create and save new product
+    const product = new productModel({
+      name,
+      price,
+      stock,
+      category,
+      brand,
+      sku,
+      imageUrl: cloudinaryResult?.secure_url || null,
+    });
 
-      const product = new productModel({
-        name,
-        description,
-        price,
-        stock,
-        category,
-        brand,
-        sku,
-        imageUrl: imageUrl, // Store the MIME type of the image
-      });
+    await product.save();
 
-      // Save the product to the database
-      await product.save();
-      logAction(
-        user._id,
-        'ADD_PRODUCT',
-        `Product added by ${user.firstName} ${user.lastName} (Email: ${user.email}). 
-        Product Name: ${name}, Category: ${category}, Price: ₹${price}, Stock: ${stock}, SKU: ${sku}.`,
-        req
-     );
-      const admin = await clientModel.findOne({ role: "admin" });
+    // Log the action
+    await logAction(
+      user._id,
+      "ADD_PRODUCT",
+      `Product added by ${user.firstName} ${user.lastName} (Email: ${user.email}). 
+      Product Name: ${name}, Category: ${category}, Price: ₹${price}, Stock: ${stock}, SKU: ${sku}.`,
+      req
+    );
+
+    // Notify admin
+    const admin = await clientModel.findOne({ role: "admin" });
     if (admin) {
       const productNotification = new notificationModel({
         recipient: admin._id,
@@ -54,13 +77,14 @@ export const addProduct = async (req, res) => {
       });
       await productNotification.save();
     }
-      return res.status(200).json({ message: "Product added successfully" });
-    } catch (error) {
-      console.error('Error during product creation:', error);
-      return res.status(500).json({ message: "Internal server error" });
-    }
-  });
+
+    return res.status(200).json({ message: "Product added successfully" });
+  } catch (error) {
+    console.error("Error during product creation:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
 };
+
 
 export const GetProduct = async (req, res) => {
   try {

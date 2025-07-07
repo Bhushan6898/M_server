@@ -37,7 +37,7 @@ app.use(fileUpload({
 }))
 // Serve static files from the "uploads" directory
 
-app.use("/mahaluxmi_hardware", express.static(path.join(__dirname, "mahaluxmi_hardware")));
+// app.use("/mahaluxmi_hardware", express.static(path.join(__dirname, "mahaluxmi_hardware")));
 // Use external routes
 app.use("/", routes);
 app.use("/user", userroutes);
