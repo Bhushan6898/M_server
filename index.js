@@ -43,7 +43,7 @@ app.use("/", routes);
 app.use("/user", userroutes);
 app.use("/bill", billroutes);
 app.use("/product", productroutes);
-
+//
 const DB_URI = process.env.DB_URI;
 
 // Connect to MongoDB
