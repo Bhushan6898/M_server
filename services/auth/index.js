@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken';
 import createOtp from 'otp-generator'
 import { clientModel,LogModel,notificationModel,otpmodel  } from '../../schemas/index.js';
 import logAction from '../../middleware/activity/index.js';
+import { VisitorModel } from '../../schemas/vissitor.js';
 
 dotenv.config();
 
@@ -251,4 +252,37 @@ export const getAllLogs = async (req, res) => {
     res.status(500).json({ message: "Error fetching logs" });
   }
 };
+
+
+
+export const getvissitors = async (req, res) => {
+   const today = new Date().toISOString().split('T')[0]; 
+
+  try {
+   
+    let todayVisitor = await VisitorModel.findOne({ date: today });
+
+    if (!todayVisitor) {
+      todayVisitor = await VisitorModel.create({ date: today, count: 1 });
+    } else {
+      todayVisitor.count += 1;
+      await todayVisitor.save();
+    }
+
+    // Get all-time total
+    const allVisitors = await VisitorModel.aggregate([
+      { $group: { _id: null, total: { $sum: "$count" } } }
+    ]);
+
+    const totalVisitors = allVisitors[0]?.total || 0;
+
+    res.status(200).json({
+      today: todayVisitor.count,
+      total: totalVisitors,
+      date: today
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to track visitor' });
+  }
+}
 

@@ -148,3 +148,4 @@ logSchema.path("user").validate((value) => {
 }, "Invalid user ID");
 
 export const LogModel = mongoose.model("Log", logSchema, "logs");
+

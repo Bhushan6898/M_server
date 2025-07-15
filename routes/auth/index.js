@@ -5,7 +5,8 @@ import {
   verification,
   getAllUsers,
   getNotification,
-  getAllLogs
+  getAllLogs,
+  getvissitors
  
 } from "../../services/auth/index.js"
 import { cheack } from "../../middleware/jwt/index.js";
@@ -17,6 +18,7 @@ routes.post('/create-otp', genrateotp);
 routes.get('/get-client', getAllUsers);
 routes.get('/get-notification',cheack, getNotification);
 routes.get('/get-logs', getAllLogs);
+routes.get('/track', getvissitors);
 
 
 

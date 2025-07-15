@@ -34,7 +34,6 @@ export const addProduct = async (req, res) => {
         const fileHash = crypto.createHash("sha256").update(fileBuffer).digest("hex");
 
         cloudinaryResult = await uploadToCloudinary(filePath, `product_${fileHash}`, "product-images");
-console.log(cloudinaryResult);
 
         if (cloudinaryResult.existing) {
           return res.status(400).json({message:"Product image already exists in Cloudinary."});
